@@ -1,32 +1,59 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 )
 
 func main() {
-	a, err := os.Create("notas.txt")
+	add()
+	list()
+}
 
+func add() {
+	file, err := os.OpenFile("notas.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Printf("error al crear el archivo")
+		log.Fatal("Error al abrir el archivo", err)
+		return
+	}
+	defer file.Close()
+
+	// Escribe en el archivo
+	fmt.Println("Escriba una nota!")
+	scanner := bufio.NewScanner(os.Stdin)
+	if !scanner.Scan() {
+		fmt.Println("No se pudo leer la nota")
 		return
 	}
 
-	data := "Aprendiendo a escribir en un archivo"
+	nota := scanner.Text()
 
-	_, err = a.WriteString(data)
-	if err != nil {
-		fmt.Printf("Error al escribir el archivo %v", err)
+	if _, err = file.WriteString(nota + "\n"); err != nil {
+		fmt.Println("Oh a ocurrido un error al escribir en la nota")
 		return
 	}
 
-	data = "\nEscribo otra cosa, donde se escribira? abajo o al lado?"
-	_, err = a.WriteString(data)
+	fmt.Println("Exito al escribir la nota")
+}
+
+func list() {
+	file, err := os.OpenFile("notas.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Printf("Error al escribir el archivo %v", err)
+		log.Fatal("Error al abrir el archivo", err)
 		return
 	}
+	defer file.Close()
 
-	fmt.Printf("Se creo el archivo %v y se escribio", a.Name())
+	cmd := exec.Command("bat", file.Name())
+
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Error al ejecutar el comando", err)
+		return
+	}
 }
