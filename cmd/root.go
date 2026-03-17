@@ -1,9 +1,11 @@
+// Package cmd contain the commands of the CLI for the todo list application.
 package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{

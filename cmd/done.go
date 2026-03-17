@@ -27,24 +27,25 @@ var DoneCmd = &cobra.Command{
 }
 
 func completarTarea(id string) error {
-	// 1. Abrir para leer
+	// Abrir para leer
 	file, err := os.Open("tareas.csv")
 	if err != nil {
 		return fmt.Errorf("error al abrir el archivo: %v", err)
 	}
 	defer func() {
-		if err := file.Close(); err != nil {
+		if err = file.Close(); err != nil {
 			log.Fatal("Error al cerrar el archivo")
 		}
 	}()
 
+	// Leer todo el contenido
 	reader := csv.NewReader(file)
 	rows, err := reader.ReadAll()
 	if err != nil {
 		return fmt.Errorf("error al leer archivo: %v", err)
 	}
 
-	// 2. Buscar y modificar
+	// Buscar y modificar
 	found := false
 	for i, row := range rows {
 		if row[0] == id {
@@ -55,10 +56,10 @@ func completarTarea(id string) error {
 	}
 
 	if !found {
-		return fmt.Errorf("no se encontró la tarea con ID %s", id)
+		return fmt.Errorf("la tarea no existe id borrado: %s", id)
 	}
 
-	// 3. Reescribir archivo completo
+	// Reescribir archivo completo
 	file2, err := os.Create("tareas.csv")
 	if err != nil {
 		return fmt.Errorf("error al reemplazar archivo: %v", err)
@@ -72,6 +73,7 @@ func completarTarea(id string) error {
 	writer := csv.NewWriter(file2)
 	defer writer.Flush()
 
+	// Escribir todas las filas
 	for _, row := range rows {
 		if err := writer.Write(row); err != nil {
 			return fmt.Errorf("error al escribir archivo: %v", err)

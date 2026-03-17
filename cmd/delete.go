@@ -12,8 +12,8 @@ func init() {
 
 var DeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Agrega una tarea a tu lista",
+	Short: "Borra una tarea a tu lista",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("La tarea se agrego correctamente")
+		fmt.Println("La tarea se borro correctamente")
 	},
 }

@@ -17,33 +17,38 @@ func init() {
 
 var AddCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Agrega una tarea a tu lista",
+	Short: "Agrega una task a tu lista",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agregarTarea(args)
+		agregartask(args[0])
 	},
 }
 
-func agregarTarea(args []string) {
-	id, err := obtenerSiguienteID()
-	if err != nil {
-		fmt.Println("Error al obtener el id", err)
-		return
+func agregartask(title string) {
+	// Obtener la fecha y hora actual
+	now := time.Now()
+	task := []string{
+		fmt.Sprintf("%d", getID()),
+		title,
+		"false",
+		fmt.Sprintf("%d", now.Year()),
+		fmt.Sprintf("%d", now.Month()),
+		fmt.Sprintf("%d", now.Day()),
+		fmt.Sprintf("%d", now.Hour()),
+		fmt.Sprintf("%d", now.Minute()),
+		fmt.Sprintf("%d", now.Second()),
 	}
-	ah := time.Now()
-
-	tarea := []string{strconv.Itoa(id), args[0], "false", ah.Format(time.TimeOnly)}
 
 	// Crear (o reemplazar) el archivo CSV
-	file, err := os.OpenFile("tareas.csv", os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	file, err := os.OpenFile("tasks.csv", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 	if err != nil {
 		fmt.Println("Error al crear el archivo:", err)
 		return
 	}
 
-	//Cierra el archivo al final
+	// Cierra el archivo al final
 	defer func() {
-		if err := file.Close(); err != nil {
+		if err = file.Close(); err != nil {
 			log.Fatal(err)
 		}
 	}()
@@ -52,7 +57,7 @@ func agregarTarea(args []string) {
 	writer := csv.NewWriter(file)
 
 	// Escribir todas las filas
-	err = writer.Write(tarea)
+	err = writer.Write(task)
 	if err != nil {
 		fmt.Println("Error al escribir:", err)
 		return
@@ -61,47 +66,46 @@ func agregarTarea(args []string) {
 	// Asegurarse de que se escriban los datos en disco
 	writer.Flush()
 
+	// Verificar si hubo errores al escribir
 	if err := writer.Error(); err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println("✅ Archivo CSV creado con éxito.")
-
 }
 
-func obtenerSiguienteID() (int, error) {
-	file, err := os.Open("tareas.csv")
+func getID() int {
+	// Abrir el archivo CSV para leer
+	file, err := os.Open("tasks.csv")
 	if err != nil {
-		// Si no existe el archivo, empezamos desde 1
-		if os.IsNotExist(err) {
-			return 1, nil
-		}
-		return 0, err
+		log.Fatal("Error al abrir el archivo")
 	}
 
+	// Cierra el archivo al final
 	defer func() {
-		if err := file.Close(); err != nil {
-			log.Fatal(err)
+		if err = file.Close(); err != nil {
+			log.Fatal("Error al cerrar el archivo")
 		}
 	}()
 
-	reader := csv.NewReader(file)
-	rows, err := reader.ReadAll()
+	// Leer todas las filas del CSV
+	r := csv.NewReader(file)
+	rows, err := r.ReadAll()
 	if err != nil {
-		return 0, err
+		log.Fatal("Error al leer el CSV")
 	}
 
-	// Si el archivo existe pero está vacío
+	// Si no hay filas, el ID inicial es 1
 	if len(rows) == 0 {
-		return 1, nil
+		return 1
 	}
 
-	// Obtener la última fila
-	ultima := rows[len(rows)-1]
-	lastID, err := strconv.Atoi(ultima[0])
+	// Obtener el ID de la última fila y sumarle 1
+	lastRow := rows[len(rows)-1]
+	lastID, err := strconv.Atoi(lastRow[0])
 	if err != nil {
-		return 0, err
+		log.Fatal("Error al convertir el ID a entero")
 	}
 
-	return lastID + 1, nil
+	return lastID + 1
 }
